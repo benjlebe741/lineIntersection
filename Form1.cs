@@ -33,18 +33,6 @@ namespace lineIntersection
             {
                 _pOne.X += 1;
             }
-            //Point lrTop = new Point((_pOne.X < _pTwo.X) ? _pOne.X : _pTwo.X, (_pOne.Y < _pTwo.Y) ? _pOne.Y : _pTwo.Y);
-            //Point lrBottom = new Point((_pOne.X > _pTwo.X) ? _pOne.X : _pTwo.X, (_pOne.Y > _pTwo.Y) ? _pOne.Y : _pTwo.Y);
-
-            //Rectangle lineRect = new Rectangle(lrTop.X, lrTop.Y, lrBottom.X - lrTop.X, lrBottom.Y - lrTop.Y);
-            //if (lineRect.Width < 50) { lineRect.Width = 50; } //Protection from lines that are quite vertical
-            //if (lineRect.Height < 50) { lineRect.Height = 50; } //Protection from lines that are quite horizontal
-            //First check, is it possible that the rectangle and line overlap, or is the rectangle further away from the line to the point where we dont need to go further.
-            //if (!_rect.IntersectsWith(lineRect))
-            //{
-            //    return false;
-            //}
-
             Point leftMost = (_pOne.X < _pTwo.X) ? _pOne : _pTwo;
             Point rightMost = (leftMost == _pTwo) ? _pOne : _pTwo;
 
@@ -80,12 +68,8 @@ namespace lineIntersection
                 };
             }
 
-
-
             for (int i = 0; i < rectCorners.Count; i++)
             {
-                // if (lineRect.Contains(rectCorners[i]))
-                // {
                 //Project this point onto the line-to-be-checked, both using the points x and y coord
                 int x = rectCorners[i].X;
                 int y = rectCorners[i].Y;
@@ -106,7 +90,6 @@ namespace lineIntersection
                     drawThese.Add(subbedInX);
                     returnTrue = true;
                     rect.Y = subbedInX.Y - (y - _rect.Y);
-                    //rect.Location = new Point(subbedInX.X - widthDifference, subbedInX.Y - heightDifference);
                 }
                 if (rect.Contains(subbedInY)) //X coord is new rects coord
                 {
@@ -114,7 +97,6 @@ namespace lineIntersection
                     drawThese.Add(subbedInY);
                     returnTrue = true;
                     rect.X = subbedInY.X - (x - _rect.X);
-                    //rect.Location = new Point(subbedInY.X - widthDifference, subbedInY.Y - heightDifference);  
                 }
                 if (returnTrue)
                 {
@@ -124,9 +106,7 @@ namespace lineIntersection
                 }
                 drawThese.Add(subbedInY);
                 drawThese.Add(subbedInX);
-
                 drawThese.Add(rectCorners[i]);
-                //  }
             }
 
             label1.Text = $"{sideOfLine}";
