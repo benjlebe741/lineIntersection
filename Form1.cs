@@ -394,7 +394,7 @@ namespace lineIntersection
                     WSAD[3] = false;
                     break;
                 case Keys.Space:
-                    ySpeed = (ySpeed > 0) ? ySpeed : 0;
+                    ySpeed = (ySpeed > 5) ? ySpeed : 5;
                     break;
             }
         }
