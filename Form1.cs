@@ -13,17 +13,13 @@ namespace lineIntersection
 {
     public partial class Form1 : Form
     {
-
-        bool intersecting = false;
         bool[] WSAD = new bool[] { false, false, false, false };
 
         List<Point> points = new List<Point>
         {
-            //new Point(650, 455),
-            //new Point(150, 425),
-            //new Point(230, 115),
-            //new Point(250, 455),
         };
+
+        int normalX, normalY;
 
         Rectangle rect = new Rectangle(110, 110, 20, 30);
         Rectangle pastRect = new Rectangle(110, 110, 20, 30);
@@ -35,38 +31,12 @@ namespace lineIntersection
             InitializeComponent();
         }
 
-        bool lineIntersects(Point _pOne, Point _pTwo, Rectangle _rect, Rectangle _pastRect)
+        bool lineIntersects(Point _pOne, Point _pTwo, Rectangle _rect, Rectangle _pastRect, bool move)
         {
-            bool controlX, controlY;
-            controlX = controlY = false;
-
-            //            Rectangle largerRect = new Rectangle(_rect.X -2, _rect.Y -2, _rect.Width + 2, _rect.Height + 2);
             if (_rect.Contains(_pOne) || _rect.Contains(_pTwo))
             {
-                Point p = (_rect.Contains(_pOne)) ? _pOne : _pTwo;
-
-                if (pastRect.Bottom <= p.Y)//Above 
-                {
-                    controlY = true;
-                    rect.Y = _rect.Y = p.Y - rect.Height;
-                }
-                if (pastRect.Y >= p.Y)//Below
-                {
-                    controlY = true;
-                    rect.Y = _rect.Y = p.Y;
-                }
-                if (pastRect.Right <= p.X)//Left 
-                {
-                    controlX = true;
-                    rect.X = _rect.X = p.X - rect.Width;
-                }
-                if (pastRect.X >= p.X)//Right
-                {
-                    controlX = true;
-                    rect.X = _rect.X = p.X;
-                }
+                return true;
             }
-
 
             if (_pOne.X == _pTwo.X)
             {
@@ -121,6 +91,10 @@ namespace lineIntersection
                 };
             }
 
+
+
+
+
             for (int i = 0; i < rectCorners.Count; i++)
             {
                 //Project this point onto the line-to-be-checked, both using the points x and y coord
@@ -137,35 +111,31 @@ namespace lineIntersection
 
 
                 //(Does this projected point exist inside the inputed rectangle) ? Intersection : Continue
-                bool returnTrue = false;
-
-                if (_rect.Contains(subbedInX) && !controlY) //Y coord is new rects coord
+                if (_rect.Contains(subbedInX) || rect.Contains(subbedInY))
                 {
                     drawThese.Add(subbedInX);
-                    returnTrue = true;
-                    _rect.Y = rect.Y = subbedInX.Y - (y - _rect.Y);
-
-                    //  rect.X = subbedInX.X - (x - _rect.X);
-                }
-                if (rect.Contains(subbedInY) && !controlX) //X coord is new rects coord
-                {
 
                     drawThese.Add(subbedInY);
-                    returnTrue = true;
-                    _rect.X = rect.X = subbedInY.X - (x - _rect.X);
 
-                    // rect.Y = subbedInY.Y - (y - _rect.Y);
-                }
-
-                if (returnTrue)
-                {
                     drawThese.Add(rectCorners[i]);
+
+                    int fn = 3;
+                    if (!increasingSlope && move)
+                    {
+                        rect.X += (sideOfLine > 1) ? -fn : fn;
+                        rect.Y += (sideOfLine > 1) ? -fn : fn;
+                    }
+                    else if (move)
+                    {
+                        rect.X += (sideOfLine > 1) ? -fn : fn;
+                        rect.Y += (sideOfLine > 1) ? fn : -fn;
+                    }
                     return true;
+
                 }
                 drawThese.Add(rectCorners[i]);
             }
 
-            //  label1.Text = $"{sideOfLine}";
             return false;
         }
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -174,10 +144,9 @@ namespace lineIntersection
             {
                 Point pOne = points[p];
                 Point pTwo = (p + 1 >= points.Count) ? points[0] : points[p + 1];
-                if (lineIntersects(pOne, pTwo, rect, pastRect))
+                if (lineIntersects(pOne, pTwo, rect, pastRect, false))
                 {
                     e.Graphics.DrawLine(new Pen(new SolidBrush(Color.Red), 3), pOne, pTwo);
-                    intersecting = true;
                 }
                 else
                 {
@@ -203,14 +172,136 @@ namespace lineIntersection
 
             pastRect.Location = rect.Location;
 
-            int speed = 2;
-            rect.Y += speed * 2;
-            rect.Y += (WSAD[0]) ? -3 * speed : 0;
+
+            normalX = normalY = 0;
+            rect.Y += 16;
+            collisionChecks();
+
+
+            //NOW DO YOUR PLAYER MOVEMENTS
+            int speed = 6;
+            rect.Y += (WSAD[0]) ? -speed : 0;
             rect.Y += (WSAD[1]) ? speed : 0;
             rect.X += (WSAD[2]) ? -speed : 0;
             rect.X += (WSAD[3]) ? speed : 0;
 
+
+            int xChange = pastRect.X - rect.X;
+            int yChange = pastRect.Y - rect.Y;
+
+            collisionChecks();
+
+
+
+            //NOW ADD THE NORMAL FORCE
+            pastRect = rect;
+
+            normalX /= (normalX != 0) ? Math.Abs(normalX) : 1;
+            normalY /= (normalY != 0) ? Math.Abs(normalY) : 1;
+
+
+
+            label1.Text = $"X: {normalX} \nY: {normalY}";
+
+            if (yChange != 0)
+            {
+                rect.X += normalX * 2;
+            }
+            if (xChange != 0)
+            {
+                rect.Y += normalY * 2;
+            }
+            collisionChecks();
+
+
             Refresh();
+        }
+
+
+        void collisionChecks()
+        {
+            int deltaX = (pastRect.X - rect.X);
+            int deltaY = (pastRect.Y - rect.Y);
+
+            double xDirectionChange = (deltaX == 0) ? 0 : (Math.Abs(deltaX) / deltaX);
+            double yDirectionChange = (deltaY == 0) ? 0 : (Math.Abs(deltaY) / deltaY);
+
+            bool intersection = false;
+
+            for (int p = 0; p < points.Count; p++)
+            {
+                Point pOne = points[p];
+                Point pTwo = (p + 1 >= points.Count) ? points[0] : points[p + 1];
+                if (lineIntersects(pOne, pTwo, rect, pastRect, false)) //If there is an intersection
+                {
+                    intersection = true;
+                    #region new stuff
+
+                    Point leftMost = (pOne.X < pTwo.X) ? pOne : pTwo;
+                    Point rightMost = (leftMost == pTwo) ? pOne : pTwo;
+                    Point upMost = (pOne.Y < pTwo.Y) ? pOne : pTwo;
+                    Point downMost = (upMost == pTwo) ? pOne : pTwo;
+
+
+                    bool increasingSlope = (leftMost.Y < rightMost.Y) ? true : false;
+
+                    float deltaLineX = ((pTwo.X - pOne.X) == 0) ? ((pTwo.X - pOne.X) + (float)0.00001) : (pTwo.X - pOne.X);
+                    float slope = (pTwo.Y - pOne.Y) / deltaLineX;
+
+                    float projectedPreviousX = -(((pOne.Y - (pastRect.Y + (pastRect.Height / 2))) / slope) - pOne.X);
+                    float sideOfLine = projectedPreviousX - (pastRect.X + (pastRect.Width / 2));
+
+                    int slopeX = 0;
+                    int slopeY = 0;
+
+                    int fn = 1;
+                    if (!increasingSlope)
+                    {
+                        slopeX = (sideOfLine > 1) ? -fn : fn;
+                        slopeY = (sideOfLine > 1) ? -fn : fn;
+                    }
+                    else
+                    {
+                        slopeX = (sideOfLine > 1) ? -fn : fn;
+                        slopeY = (sideOfLine > 1) ? fn : -fn;
+                    }
+
+                    normalX += slopeX;
+                    normalY += slopeY;
+
+
+                    if (xDirectionChange != slopeX)
+                    { xDirectionChange = 0; }
+                    if (yDirectionChange != slopeY)
+                    { yDirectionChange = 0; }
+                    #endregion
+                }
+            }
+
+            int count = (Math.Abs(deltaX) > Math.Abs(deltaY)) ? Math.Abs(deltaX) : Math.Abs(deltaY);
+            while (intersection)
+            {
+                count--;
+                if (count <= 0)
+                {
+                    rect.Location = pastRect.Location;
+                    break;
+                }
+                intersection = false;
+
+                rect.X += (int)xDirectionChange;
+                rect.Y += (int)yDirectionChange;
+
+                for (int p = 0; p < points.Count; p++)
+                {
+                    Point pOne = points[p];
+                    Point pTwo = (p + 1 >= points.Count) ? points[0] : points[p + 1];
+                    if (lineIntersects(pOne, pTwo, rect, pastRect, false)) //If there is an intersection
+                    {
+                        intersection = true;
+                    }
+                }
+            }
         }
 
         private void Form1_KeyPress(object sender, KeyPressEventArgs e)
