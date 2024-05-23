@@ -13,6 +13,18 @@ namespace lineIntersection
 {
     public partial class Form1 : Form
     {
+        const int MAX_Y_SPEED = 16;
+        double ySpeed = 0;
+        int time = 0;
+        double impulse = -35;
+        double accelleration = 1.8;
+        double deceleration = 1;
+
+        bool airBorn = false;
+        bool jumpPressed = false;
+
+
+
         bool[] WSAD = new bool[] { false, false, false, false };
 
         List<Point> points = new List<Point>
@@ -21,14 +33,15 @@ namespace lineIntersection
 
         int normalX, normalY;
 
-        Rectangle rect = new Rectangle(110, 110, 20, 30);
-        Rectangle pastRect = new Rectangle(110, 110, 20, 30);
+        Rectangle rect = new Rectangle(220, 220, 50, 60);
+        Rectangle pastRect;
 
         List<Point> drawThese = new List<Point>();
 
         public Form1()
         {
             InitializeComponent();
+            pastRect = rect;
         }
 
         bool lineIntersects(Point _pOne, Point _pTwo, Rectangle _rect, Rectangle _pastRect, bool move)
@@ -168,19 +181,35 @@ namespace lineIntersection
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            airBorn = true;
+            time++;
             drawThese.Clear();
 
             pastRect.Location = rect.Location;
 
-
             normalX = normalY = 0;
-            rect.Y += 16;
+
+            #region Jumping
+            if (jumpPressed)
+            {
+                ySpeed = impulse;
+                jumpPressed = false;
+            }
+            if (time % deceleration == 0)
+            {
+                ySpeed = (ySpeed + accelleration > MAX_Y_SPEED) ? MAX_Y_SPEED : ySpeed + accelleration;
+            }
+            rect.Y += (int)ySpeed;
+
+            label1.Text = $"{airBorn}";
+            #endregion
+
             collisionChecks();
 
 
             //NOW DO YOUR PLAYER MOVEMENTS
-            int speed = 6;
-            rect.Y += (WSAD[0]) ? -speed : 0;
+            int speed = 8;
+           // rect.Y += (WSAD[0]) ? -speed : 0;
             rect.Y += (WSAD[1]) ? speed : 0;
             rect.X += (WSAD[2]) ? -speed : 0;
             rect.X += (WSAD[3]) ? speed : 0;
@@ -198,10 +227,6 @@ namespace lineIntersection
 
             normalX /= (normalX != 0) ? Math.Abs(normalX) : 1;
             normalY /= (normalY != 0) ? Math.Abs(normalY) : 1;
-
-
-
-            label1.Text = $"X: {normalX} \nY: {normalY}";
 
             if (yChange != 0)
             {
@@ -259,11 +284,22 @@ namespace lineIntersection
                     {
                         slopeX = (sideOfLine > 1) ? -fn : fn;
                         slopeY = (sideOfLine > 1) ? -fn : fn;
+
+                        if (sideOfLine > 1)
+                        {
+                            airBorn = false;
+                        }
                     }
                     else
                     {
                         slopeX = (sideOfLine > 1) ? -fn : fn;
                         slopeY = (sideOfLine > 1) ? fn : -fn;
+
+                        if (sideOfLine < 1)
+                        {
+                            airBorn = false;
+                        }
+
                     }
 
                     normalX += slopeX;
@@ -324,6 +360,13 @@ namespace lineIntersection
                 case Keys.D:
                     WSAD[3] = true;
                     break;
+                case Keys.Space:
+                    if (airBorn == false)
+                    {
+                        jumpPressed = true;
+                        airBorn = true;
+                    }
+                    break;
                 case Keys.X:
                     rect.Location = PointToClient(Cursor.Position);
                     break;
@@ -349,6 +392,9 @@ namespace lineIntersection
                     break;
                 case Keys.D:
                     WSAD[3] = false;
+                    break;
+                case Keys.Space:
+                    ySpeed = (ySpeed > 0) ? ySpeed : 0;
                     break;
             }
         }

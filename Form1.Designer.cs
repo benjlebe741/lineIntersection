@@ -52,7 +52,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1281, 676);
+            this.ClientSize = new System.Drawing.Size(1423, 758);
             this.Controls.Add(this.label1);
             this.DoubleBuffered = true;
             this.Name = "Form1";
